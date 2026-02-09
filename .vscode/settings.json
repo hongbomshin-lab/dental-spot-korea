@@ -1,3 +1,9 @@
 {
-    "python.defaultInterpreterPath": "C:\\Users\\hongb\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+    "python.defaultInterpreterPath": "C:\\Users\\hongb\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+    "accessibility.signals.taskCompleted": {
+        "audioCue": "on"
+    },
+    "accessibility.signals.progress": {
+        "audioCue": "on"
+    }
 }
