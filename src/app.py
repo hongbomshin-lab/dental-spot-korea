@@ -5,7 +5,7 @@ import plotly.express as px
 import os
 
 # 페이지 설정
-st.set_page_config(page_title="치과 개원 유망 지역 분석 대시보드 V3", layout="wide")
+st.set_page_config(page_title="치과 개원 유망 지역 분석 대시보드 V3.1", layout="wide")
 
 # 데이터 로드 함수
 @st.cache_data
