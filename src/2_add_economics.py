@@ -54,23 +54,39 @@ def add_economic_data():
 
     # 4. 동별 경제력 지표 산출
     print("경제력 지표 산출 중...")
-    economic_idx = df_housing.groupby(['시도', '시군구_parsed', '읍면동_parsed'])['평당가격'].mean().reset_index()
-    economic_idx.columns = ['시도', '시군구', '읍면동', '경제력_지수']
+    # 법정동 기준 평균가 계산
+    legal_dong_avg = df_housing.groupby(['시도', '시군구_parsed', '읍면동_parsed'])['평당가격'].mean().reset_index()
+    legal_dong_avg.columns = ['시도', '시군구', '읍면동_legal', '경제력_지수']
 
-    # 5. 기존 분석 결과와 병합
-    print("최종 데이터 병합 및 스코어링...")
+    # 5. 기존 분석 결과와 병합 및 매칭 고도화
+    print("최종 데이터 병합 및 행정동-법정동 매칭 개선...")
     df_ranking = pd.read_csv(ranking_path).fillna('')
-    
-    # Left Join
-    df_final = pd.merge(df_ranking, economic_idx, on=['시도', '시군구', '읍면동'], how='left')
 
-    # 아파트 거래가 없는 곳 처리 (매칭되지 않은 곳)
-    # 1차: 해당 시군구의 평균값으로 채움
-    gu_avg = df_final.groupby(['시도', '시군구'])['경제력_지수'].transform('mean')
-    df_final['경제력_지수'] = df_final['경제력_지수'].fillna(gu_avg)
-    
-    # 2차: 그래도 남은 곳은 0으로 (드문 경우)
+    # [매칭 로직 개선] 행정동(신정3동) -> 법정동(신정동) 변환 함수
+    import re
+    def get_base_dong(dong):
+        # 1. 숫자 및 '제', '.' 제거 (예: 신정3동 -> 신정동, 창제1동 -> 창동)
+        # 2. '동/면/읍'으로 끝나는 부분까지만 추출
+        base = re.sub(r'[0-9제\.]', '', dong)
+        return base
+
+    # 랭킹 데이터의 읍면동을 법정동 기준으로 변환한 임시 컬럼 생성
+    df_ranking['읍면동_base'] = df_ranking['읍면동'].apply(get_base_dong)
+
+    # 법정동 평균 데이터와 병합 (시도, 시군구, 법정동명으로 매칭)
+    df_final = pd.merge(
+        df_ranking, 
+        legal_dong_avg, 
+        left_on=['시도', '시군구', '읍면동_base'], 
+        right_on=['시도', '시군구', '읍면동_legal'], 
+        how='left'
+    )
+
+    # 데이터가 없는 곳은 0으로 처리 (사용자 요청: 외부 검색 데이터 배제)
     df_final['경제력_지수'] = df_final['경제력_지수'].fillna(0)
+    
+    # 임시 컬럼 정리
+    df_final = df_final.drop(columns=['읍면동_base', '읍면동_legal'])
 
     # 6. 최종 스코어링 업데이트
     avg_econ = df_final[df_final['경제력_지수'] > 0]['경제력_지수'].mean()
