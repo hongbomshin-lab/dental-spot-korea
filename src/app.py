@@ -169,6 +169,38 @@ try:
                         
                         # 유망 지수 게이지
                         st.progress(score_val / max_score)
+
+                        # [New] 소상공인 상권분석 링크 추가 (반자동 방식)
+                        sbiz_url = "https://bigdata.sbiz.or.kr/#/hotplace/gis"
+                        target_loc = f"{row['시군구']} {row['읍면동']}"
+                        
+                        st.markdown(f"""
+                        <div style="
+                            background-color: rgba(255, 255, 255, 0.05); 
+                            padding: 15px; 
+                            border-radius: 10px; 
+                            margin-top: 15px;
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                        ">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 14px; font-weight: bold; color: #ff4b4b;">📊 외부 상권분석 리포트</span>
+                                <a href="{sbiz_url}" target="_blank" style="text-decoration: none;">
+                                    <div style="
+                                        background-color: #ff4b4b; 
+                                        color: white; 
+                                        padding: 4px 12px; 
+                                        border-radius: 20px; 
+                                        font-size: 12px; 
+                                        font-weight: bold;
+                                    ">사이트 이동 ↗</div>
+                                </a>
+                            </div>
+                            <div style="font-size: 13px; color: #cccccc; line-height: 1.6;">
+                                1️⃣ 검색창에 <b>"{target_loc}"</b> 입력<br>
+                                2️⃣ 업종선택: <b>보건의료 > 의원 > 치과의원</b>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
             
             st.markdown("---")
 
