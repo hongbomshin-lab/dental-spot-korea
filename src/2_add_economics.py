@@ -88,11 +88,23 @@ def add_economic_data():
     # 임시 컬럼 정리
     df_final = df_final.drop(columns=['읍면동_base', '읍면동_legal'])
 
-    # 6. 최종 스코어링 업데이트
-    avg_econ = df_final[df_final['경제력_지수'] > 0]['경제력_지수'].mean()
-    # Total_Score = (노인인구수 * 구별_지표) * (경제력_지수 / 전체평균_경제력)
-    # v2의 최종_유망_지수가 이미 (노인인구수 * 구별_지표) 이므로 이를 활용
-    df_final['Total_Score'] = df_final['최종_유망_지수'] * (df_final['경제력_지수'] / avg_econ)
+    # 6. 최종 스코어링 업데이트 (Streamlit 앱과 동일 로직 적용)
+    print("스코어링 로직 고도화 적용 중...")
+    
+    def normalize_score(col_series):
+        min_val = col_series.min()
+        max_val = col_series.max()
+        # 1~10점 스케일로 변환
+        return 1 + (col_series - min_val) / (max_val - min_val) * 9
+
+    # 각 지표 정규화 (1~10점)
+    df_final['노인인구_점수'] = normalize_score(df_final['노인인구수'])
+    df_final['공급부족_점수'] = normalize_score(df_final['구별_지표']) # 구별_지표는 '구별_치과수' 대비 인구 등을 의미한다고 가정
+    df_final['경제력_점수'] = normalize_score(df_final['경제력_지수'])
+
+    # 가중치 설정 (기본값: 노인 1.0, 경제력 1.0)
+    # Score = (Pop^1.0) * (Comp^1.0) * (Econ^1.0)
+    df_final['Total_Score'] = (df_final['노인인구_점수'] ** 1.0) * (df_final['공급부족_점수'] ** 1.0) * (df_final['경제력_점수'] ** 1.0)
 
     # 7. 결과 저장 및 출력
     df_final = df_final.sort_values(by='Total_Score', ascending=False)
